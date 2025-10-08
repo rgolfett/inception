@@ -1,0 +1,70 @@
+services:
+  nginx:
+    build:
+      context: ./requirements/nginx
+      dockerfile: Dockerfile
+    container_name: nginx
+    ports:
+      - "443:443"
+    networks:
+      - wordpress-network
+    volumes:
+      - wordpress-data:/var/www
+      - ./requirements/nginx/conf/ssl:/etc/nginx/ssl/
+    restart: unless-stopped
+    depends_on :
+      wordpress:
+        condition: service_started
+  mariadb:
+    build:
+      context: ./requirements/mariadb
+      dockerfile: Dockerfile
+    container_name: mariadb
+    healthcheck:
+      test: ["CMD", "mariadb-admin","--socket=/tmp/mysql.sock","ping","--silent"]
+      interval: 1s
+      timeout: 50s
+      retries: 50
+    networks:
+      - mariadb-network
+    env_file:
+      - .env
+    volumes:
+      - mariadb-data:/var/lib/mysql
+    restart: unless-stopped
+  wordpress:
+    build:
+      context: ./requirements/wordpress
+      dockerfile: Dockerfile
+    container_name: wordpress
+    networks:
+      - mariadb-network
+      - wordpress-network
+    env_file:
+      - .env
+    volumes:
+      - wordpress-data:/var/www
+    restart: unless-stopped
+    depends_on:
+      mariadb:
+        condition: service_healthy
+
+volumes:
+    wordpress-data:
+      driver: local
+      driver_opts:
+        type: none
+        o: bind
+        device: /home/rgolfett/data/wordpress
+    mariadb-data:
+      driver: local
+      driver_opts:
+        type: none
+        o: bind
+        device: /home/rgolfett/data/mariadb
+
+networks:
+  mariadb-network:
+    driver: bridge
+  wordpress-network:
+    driver: bridge
