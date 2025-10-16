@@ -19,5 +19,4 @@ clear: down
 	docker volume rm $$(docker volume ls -q); \
 	docker network rm $$(docker network ls -q);
 
-
 .PHONY: all build generate up down
