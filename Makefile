@@ -13,10 +13,7 @@ down:
 	docker-compose -f ./srcs/docker-compose.yml down
 
 clear: down
-	@docker stop $$(docker ps -qa); \
-	docker rm $$(docker ps -qa); \
-	docker rmi -f $$(docker images -qa); \
-	docker volume rm $$(docker volume ls -q); \
-	docker network rm $$(docker network ls -q);
+	docker system prune -af
+	docker volume rm `sudo docker volume ls -q`
 
 .PHONY: all build generate up down
